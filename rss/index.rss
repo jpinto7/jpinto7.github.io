@@ -1,0 +1,150 @@
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>JPinto</title><description>A collection of posts, stories and ideas on technology, music and life experiences</description><link>http://localhost:2368/</link><generator>Ghost 0.11</generator><lastBuildDate>Sat, 01 Apr 2017 18:56:02 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>How to reset your application's states using Angular UI-Router</title><description>&lt;p&gt;When it comes to develop a single page app that requires a good client-side router using AngularJS, the de-facto solution for many developers is to use &lt;a href="https://ui-router.github.io/"&gt;Angular UI-Router&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Among its features there's an important concept called &lt;strong&gt;states&lt;/strong&gt;, which is the key mechanism that this router uses to manage routing in&lt;/p&gt;</description><link>http://localhost:2368/how-to-reset-your-applications-states-using-angular-ui-router/</link><guid isPermaLink="false">1fbfae34-3141-4f69-9619-4059bc9f7f51</guid><category>technology</category><category>angularjs</category><category>javascript</category><category>programming</category><dc:creator>Juan Pablo Pinto</dc:creator><pubDate>Thu, 03 Nov 2016 15:27:00 GMT</pubDate><media:content url="http://localhost:2368/content/images/2016/11/how-to-reset-your-applications-states-using-angular-ui-router/cover.jpg" medium="image"/><content:encoded>&lt;img src="http://localhost:2368/content/images/2016/11/how-to-reset-your-applications-states-using-angular-ui-router/cover.jpg" alt="How to reset your application's states using Angular UI-Router"&gt;&lt;p&gt;When it comes to develop a single page app that requires a good client-side router using AngularJS, the de-facto solution for many developers is to use &lt;a href="https://ui-router.github.io/"&gt;Angular UI-Router&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Among its features there's an important concept called &lt;strong&gt;states&lt;/strong&gt;, which is the key mechanism that this router uses to manage routing in an application. As a result, the application behaves like a state machine. Each state is to be considered as a "place" in the application in terms of UI (the look and feel) and navigation (URL, query parameters and so on).&lt;/p&gt;
+
+&lt;p&gt;To define or register a state, first we need to inject the $state provider in the config phase function of an AngularJS application and use its state method like this (using a particular stateName and stateConfig object):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-js"&gt;$stateProvider.state('home', {
+    templateUrl: 'home.html',
+    controller: 'HomeController',
+    controllerAs: 'homeCtrl'
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As you can see, the $state provider allows us to easily declare the states of an application. However, as far as I'm concerned, there's no easy way to reset the application's states. The idea for this came to me when I was developing an application that required that upon user logout, all the states were cleaned up and some default states were created. &lt;/p&gt;
+
+&lt;p&gt;Before moving to the actual steps of the solution, If you haven't added the UI-Router package to your project, you can do it with bower (make sure it's the latest stable version, which by the time of this post is 0.3.1):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;bower install --save angular-ui-router#0.3.1  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Or with npm:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;npm install --save angular-ui-router  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now to the meat and potatoes of this post. What I ended up doing was this:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Open the angular-ui-router.js file (it's the unminified version) in your favorite text editor.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Add an init method inside the $StateProvider function. This function defines the $state provider in the ui.router.state module (look around the line 2208):&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class="language-js"&gt;function $StateProvider($urlRouterProvider, $urlMatcherFactory) {  
+    var root, states = {}, $state, queue = {}, abstractKey = 'abstract';
+    this.init = function () {
+        states = {};
+        queue = {};
+    };
+...
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Add an init method inside the $UrlRouterProvider function. This function defines the $urlRouter provider in the ui.router.router module (look around the line 1771):&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class="language-js"&gt;function $UrlRouterProvider($locationProvider, $urlMatcherFactory) {  
+    var rules = [], otherwise = null, interceptDeferred = false, listener;
+    this.init = function () {
+        rules = [];
+        otherwise = null;
+    };
+...
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;With those two changes, save the file. Minify it if you want a production ready file to include in your project.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Now you can call the init method using the $state provider and the $urlRouter provider like this (I'm assuming they have been injected properly wherever they're used):&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class="language-js"&gt;$stateProvider.init();
+$urlRouterProvider.init();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As you can see, with a few changes in Angular UI-Router's source code, you now have the ability to reset the states of your application. Don't forget to register some default states (if applicable) after calling the init method to keep the application's navigability. I hope you've found this post helpful.&lt;/p&gt;
+
+&lt;p&gt;Happy coding!&lt;/p&gt;</content:encoded></item><item><title>How to update your Ghost blog</title><description>&lt;p&gt;Since this is the first time I'm updating my Ghost-based blog, I want to share the process I followed in order to do it successfully. Even though it's purely a manual process, I hope that an automatic update feature gets implemented soon as part of the Ghost's next releases in&lt;/p&gt;</description><link>http://localhost:2368/how-to-update-your-ghost-blog/</link><guid isPermaLink="false">238b1340-7046-4ecd-a74a-b08228e7d393</guid><category>ghost</category><category>technology</category><category>git</category><dc:creator>Juan Pablo Pinto</dc:creator><pubDate>Mon, 16 May 2016 19:21:00 GMT</pubDate><media:content url="http://localhost:2368/content/images/2016/05/how-to-update-your-ghost-blog/cover.jpg" medium="image"/><content:encoded>&lt;img src="http://localhost:2368/content/images/2016/05/how-to-update-your-ghost-blog/cover.jpg" alt="How to update your Ghost blog"&gt;&lt;p&gt;Since this is the first time I'm updating my Ghost-based blog, I want to share the process I followed in order to do it successfully. Even though it's purely a manual process, I hope that an automatic update feature gets implemented soon as part of the Ghost's next releases in the near future.&lt;/p&gt;
+
+&lt;h2 id="thebackup"&gt;The Backup&lt;/h2&gt;
+
+&lt;p&gt;Before you attempt anything, I strongly suggest you backup your Ghost blog folder in case something goes wrong (I've been there too :S). By the way, it's always a great idea to keep a repository of your blog files. I keep mines on GitHub but you could use also Bitbucket.&lt;/p&gt;
+
+&lt;h2 id="letsupdatethatd"&gt;Let's update that $#*!&lt;/h2&gt;
+
+&lt;p&gt;Download Ghost's &lt;a href="https://ghost.org/developers/" target="_blank"&gt;latest release&lt;/a&gt; and extract the zip file to a temporary location or you could simply clone it from GitHub. Open your Terminal and type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;git clone git://github.com/tryghost/ghost.git  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will create a &lt;code&gt;ghost&lt;/code&gt; folder at your current local file system location. If you want to specify a different folder name type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;git clone git://github.com/tryghost/ghost.git your_folder_name  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, navigate to your original Ghost blog folder and delete the &lt;code&gt;core&lt;/code&gt; and &lt;code&gt;node_modules&lt;/code&gt; folders. Keep the &lt;code&gt;content&lt;/code&gt; folder. You can also delete all the &lt;code&gt;*.js&lt;/code&gt; (except &lt;code&gt;config.js&lt;/code&gt;), &lt;code&gt;*.json&lt;/code&gt; and &lt;code&gt;*.md&lt;/code&gt; files.&lt;/p&gt;
+
+&lt;p&gt;Now, navigate to the &lt;code&gt;ghost&lt;/code&gt; folder you just downloaded. In case you have cloned it from GitHub, first you have to switch to the &lt;code&gt;stable&lt;/code&gt; branch (production environment) by typing &lt;code&gt;git checkout stable&lt;/code&gt; in the Terminal.&lt;/p&gt;
+
+&lt;p&gt;Inside that folder move the &lt;code&gt;core&lt;/code&gt; folder and all the &lt;code&gt;*.js&lt;/code&gt;, &lt;code&gt;*.json&lt;/code&gt; and &lt;code&gt;*.md&lt;/code&gt; files to your original Ghost blog folder. If you're using the Casper theme included with Ghost,  you may move the &lt;code&gt;content/themes/casper&lt;/code&gt; folder to your &lt;code&gt;content/themes&lt;/code&gt; folder.&lt;/p&gt;
+
+&lt;p&gt;Open the Terminal, navigate to your original Ghost blog folder and type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;npm install --production  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will create a &lt;code&gt;node_modules&lt;/code&gt; folder to include all the dependencies of your Ghost blog. In case you want to check if the whole update process went successful, first install the remaining &lt;code&gt;devDependencies&lt;/code&gt; by typing:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;npm install  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And start the server in development mode with:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;npm start  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Open a web browser at &lt;a href="http://localhost:2368" target="_blank"&gt;http://localhost:2368&lt;/a&gt; to verify Ghost is up and running. After this you can deploy your Ghost blog as usual to your server. In my case, I'm using &lt;a href="https://www.heroku.com" target="_blank"&gt;Heroku&lt;/a&gt; and it's as simple as typing:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-plain"&gt;git push heroku master  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Congratulations! You have updated your Ghost blog successfully and now you can continue writing awesome posts as usual. Until next time.&lt;/p&gt;</content:encoded></item><item><title>Temos nosso próprio tempo</title><description>&lt;p&gt;Hoje tenho o prazer de dedicar o meu primeiro post a uma das melhores bandas de rock que o Brasil já teve. Sim, estou falando da &lt;a href="http://legiaourbana.com.br" target="_blank"&gt;Legião Urbana&lt;/a&gt;. Se você gosta da música brasileira, então é importante reconhecer que eles foram um marco divisório na cena de rock brasileiro, principalmente&lt;/p&gt;</description><link>http://localhost:2368/temos-nosso-proprio-tempo/</link><guid isPermaLink="false">f1ea9fee-3a2e-4805-93d3-0b284029f665</guid><category>brazil</category><category>music</category><category>portuguese</category><dc:creator>Juan Pablo Pinto</dc:creator><pubDate>Sun, 27 Mar 2016 18:40:00 GMT</pubDate><media:content url="http://localhost:2368/content/images/2016/03/temos-nosso-proprio-tempo/cover.jpg" medium="image"/><content:encoded>&lt;img src="http://localhost:2368/content/images/2016/03/temos-nosso-proprio-tempo/cover.jpg" alt="Temos nosso próprio tempo"&gt;&lt;p&gt;Hoje tenho o prazer de dedicar o meu primeiro post a uma das melhores bandas de rock que o Brasil já teve. Sim, estou falando da &lt;a href="http://legiaourbana.com.br" target="_blank"&gt;Legião Urbana&lt;/a&gt;. Se você gosta da música brasileira, então é importante reconhecer que eles foram um marco divisório na cena de rock brasileiro, principalmente nas décadas dos 80 e 90. É por isso e muito mais que ainda é considerada a maior banda de rock do país. Simplesmente não podem ser ignorados e agora eu explico o por quê.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="http://localhost:2368/content/images/2016/03/temos-nosso-proprio-tempo/image_1.jpg" alt="Temos nosso próprio tempo"&gt;&lt;/p&gt;
+
+&lt;h2 id="tudotemcomeo"&gt;Tudo tem começo&lt;/h2&gt;
+
+&lt;p&gt;Formada em agosto de 1982, a banda surgiu literalmente de um aborto (o quê?), quer dizer, do Aborto Elétrico, a antiga banda de &lt;a href="http://renatorusso.com.br" target="_blank"&gt;Renato Russo&lt;/a&gt; e a primeira banda punk de Brasília. Este foi o marco para o surgimento de outra banda que continua fazendo história até hoje: &lt;a href="http://capitalinicial.com.br" target="_blank"&gt;Capital Inicial&lt;/a&gt;. A primeira formação já contava com a presença de &lt;a href="http://marcelobonfa.com.br" target="_blank"&gt;Marcelo Bonfá&lt;/a&gt; mas não com a de &lt;a href="http://dadovilla-lobos.com.br" target="_blank"&gt;Dado Villa-Lobos&lt;/a&gt; (1983) e Renato Rocha (1984).&lt;/p&gt;
+
+&lt;p&gt;A banda fez algumas apresentações (seu primeiro show formal foi no célebre Circo Voador, Rio de Janeiro) antes de assinar contrato com a que seria a gravadora de todos seus discos, a EMI-Odeon. O sucesso não demorou a chegar e rapidamente tornaram-se na banda mais venerada pelo público e respeitada pela crítica, levando a figura de Renato Russo e os outros integrantes a limites estratosféricos.&lt;/p&gt;
+
+&lt;h2 id="anos80"&gt;Anos 80&lt;/h2&gt;
+
+&lt;p&gt;Durante esta década gravaram quatro álbuns de estúdio: &lt;em&gt;Legião Urbana&lt;/em&gt; (1985), &lt;em&gt;Dois&lt;/em&gt; (1986), &lt;em&gt;Que País é Este 1978/1987&lt;/em&gt; (1987) e &lt;em&gt;As Quatro Estações&lt;/em&gt; (1989). Músicas como “Será”, “Ainda é Cedo”, “Tempo Perdido”, “Eduardo e Mônica”, “Faroeste Caboclo”, “Pais e Filhos” e “Quando o Sol Bater na Janela do Teu Quarto” ficaram para a história e mudaram a face musical do rock brasileiro.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="http://localhost:2368/content/images/2016/03/temos-nosso-proprio-tempo/image_2.jpg" alt="Temos nosso próprio tempo"&gt;&lt;/p&gt;
+
+&lt;p&gt;Foi neste período que acabaram definindo o seu estilo musical, um rock às vezes suave, às vezes influenciado pelo punk e hardcore, com uma musicalidade cheia das mais diversas variações instrumentais e vocais junto a letras profundas e poéticas carregadas de críticas à sociedade e à humanidade em geral. Não é de surpreender que pelo contexto político e cultural do Brasil daquela época (a ditadura militar estava acabando), os jovens se sentiram identificados com cada uma de suas músicas e sobretudo com as histórias por trás das letras.&lt;/p&gt;
+
+&lt;h2 id="anos90"&gt;Anos 90&lt;/h2&gt;
+
+&lt;p&gt;Após a saída de Renato Rocha em 1989, a banda iniciou sua fase mais madura e resolveu fortalecer sua imagem de trio musical, optando por contratar músicos de apoio para acompanhá-los em suas gravações e shows. O começo dessa década também marcou um reviravolta na vida de Renato Russo, que nessa época estava passando por um momento complicado e emocionalmente instável de sua vida por conta da descoberta de que era soropositivo, a declaração pública de sua homossexualidade e sua entrega ao álcool e às drogas. O início do fim estava a chegar.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="http://localhost:2368/content/images/2016/03/temos-nosso-proprio-tempo/image_3.jpg" alt="Temos nosso próprio tempo"&gt;&lt;/p&gt;
+
+&lt;p&gt;Nesta década gravaram mais quatro álbuns de estúdio: &lt;em&gt;V&lt;/em&gt; (1991), &lt;em&gt;O Descobrimento do Brasil&lt;/em&gt; (1993), &lt;em&gt;A Tempestade ou O Livro dos Dias&lt;/em&gt; (1996) e &lt;em&gt;Uma Outra Estação&lt;/em&gt; (1997). Grandes sucessos como “O Teatro dos Vampiros”, “Metal Contra as Nuvens”, “Vamos Fazer um Filme”, “Giz”, “Perfeição”, “Dezesseis”, “As Flores do Mal” e “Antes das Seis”  terminaram de consagrar o nome da Legião Urbana dentro do chamado “Quarteto Sagrado” do rock brasileiro junto com Barão Vermelho, Titãs e Os Paralamas do Sucesso. &lt;/p&gt;
+
+&lt;p&gt;E chegou 1996, um ano especialmente triste para a história do rock no Brasil. No dia 11 de outubro, Renato Russo morreu aos 36 anos por conta das complicações causadas pelo HIV, deixando um buraco difícil de preencher nos corações dos seus fãs. Sua notável habilidade para traduzir emoções, frustrações, esperanças e inquietudes próprias dos jovens em poesia e letras inspiradoras nunca será esquecida. Não é por acaso que era considerado um dos melhores letristas e compositores da época. Os outros integrantes, Dado Villa-Lobos e Marcelo Bonfá, continuaram suas carreiras solo e trabalhando juntos esporadicamente.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="http://localhost:2368/content/images/2016/03/temos-nosso-proprio-tempo/image_4.jpg" alt="Temos nosso próprio tempo"&gt;&lt;/p&gt;
+
+&lt;h2 id="alendacontinua"&gt;A lenda continua&lt;/h2&gt;
+
+&lt;p&gt;Ainda hoje, novos fãs da Legião Urbana continuam surgindo pelo Brasil e pelo mundo inteiro. Até 2012, ano de encerramento das atividades da gravadora EMI, era a banda que mais vendeu discos de catálogo em todo o mundo (250,000 cópias por ano). Além dos oito álbuns de estúdio que gravaram no total (quase 20 milhões de copias vendidas no Brasil), a banda conta com cinco álbuns ao vivo, dos quais têm destaque especial Acústico MTV (1999), As Quatro Estações ao Vivo (2004) e o disco duplo Como é Que Se Diz Eu Te Amo (2001).&lt;/p&gt;
+
+&lt;p&gt;Já o ano 2015 foi muito especial para os fãs da Legião Urbana. Após 19 anos da morte de Renato Russo e coincidindo com os 30 anos do lançamento de seu primeiro disco, a banda reuniu-se novamente para uma turnê nacional que começou no dia 23 de outubro em Santos, litoral norte de São Paulo, a cidade onde fizeram sua última apresentação como banda em 1995.&lt;/p&gt;
+
+&lt;p&gt;Finalmente quero encerrar este post, mas não sem antes deixar com vocês meu Top 10 das músicas que eu considero minhas preferidas da banda. E aí, quais são suas músicas preferidas da Legião Urbana?&lt;/p&gt;</content:encoded></item></channel></rss>
